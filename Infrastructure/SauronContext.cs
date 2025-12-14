@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Sauron.API.Infrastructure.Models;
+using Sauron.API.Infrastructure.Entities;
 
 namespace Sauron.API.Infrastructure;
 
