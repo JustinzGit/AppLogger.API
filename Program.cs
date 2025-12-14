@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Sauron.API.Extensions;
 using Sauron.API.Infrastructure;
 
@@ -10,7 +11,11 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<SauronContext>(options => options.UseSqlite("Data Source=sauron.db"));
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    // httprepl parses openapi 3.0.x
+    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
+});
 
 var app = builder.Build();
 
