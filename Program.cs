@@ -20,12 +20,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
     // Seed the database
-    using (var scope = app.Services.CreateScope())
-    {
-        var context = scope.ServiceProvider.GetRequiredService<SauronContext>();
-        context.Database.EnsureCreated();
-        DbSeeder.Seed(context);
-    }
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<SauronContext>();
+    context.Database.EnsureCreated();
+    DbSeeder.Seed(context);
 }
 
 app.UseHttpsRedirection();
