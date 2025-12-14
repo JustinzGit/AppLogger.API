@@ -21,7 +21,7 @@ public static class DbSeeder
 
         var logs = new List<Log>();
 
-        for (int i = 0; i < 500; i++)
+        for (int i = 0; i < 1_000_000; i++)
         {
             var logTime = DateTime.UtcNow.AddDays(-_random.Next(0, 30)).AddHours(-_random.Next(0, 24)).AddMinutes(-_random.Next(0, 60));
             var messageLength = _random.Next(100, 2001); // Up to 2000 characters
