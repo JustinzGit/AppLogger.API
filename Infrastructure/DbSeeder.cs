@@ -8,22 +8,83 @@ public static class DbSeeder
 
     public static void Seed(SauronContext context)
     {
-        if (context.Logs.Any())
-        {
-            return; // Already seeded
-        }
 
+        var today = DateTime.UtcNow.Date;
         var servers = new[] { "Server1", "Server2", "Server3", "Server4", "Server5" };
         var apps = new[] { "Sauron.API", "AnotherApp", "ThirdApp", "FourthApp", "FifthApp" };
         var sourceContexts = new[] { "Controllers.LoggingController", "Features.Logging.GetLogs", "Infrastructure.SauronContext", "Controllers.HomeController", "Features.Auth.Login" };
         var levels = new[] { "Information", "Warning", "Error", "Debug" };
         var accounts = new[] { "admin", "user1", "user2", "user3", null };
 
-        var logs = new List<Log>();
-
-        for (int i = 0; i < 1_000_000; i++)
+        // Seed 1,000,000 logs if the database is empty
+        if (!context.Logs.Any())
         {
-            var logTime = DateTime.UtcNow.AddDays(-_random.Next(0, 30)).AddHours(-_random.Next(0, 24)).AddMinutes(-_random.Next(0, 60));
+            var initialLogs = new List<Log>();
+            for (int i = 0; i < 1_000_000; i++)
+            {
+                var logTime = DateTime.UtcNow.AddDays(-_random.Next(0, 30)).AddHours(-_random.Next(0, 24)).AddMinutes(-_random.Next(0, 60));
+                var messageLength = _random.Next(100, 2001); // Up to 2000 characters
+                var message = GenerateRandomMessage(messageLength);
+
+                var log = new Log
+                {
+                    LogTime = logTime,
+                    LogDay = (byte)logTime.Day,
+                    Server = servers[_random.Next(servers.Length)],
+                    App = apps[_random.Next(apps.Length)],
+                    SourceContext = sourceContexts[_random.Next(sourceContexts.Length)],
+                    Level = levels[_random.Next(levels.Length)],
+                    Message = message,
+                    Exception = _random.Next(0, 10) < 3 ? "System.Exception: Something went wrong" : null, // 30% chance of exception
+                    Account = accounts[_random.Next(accounts.Length)]
+                };
+
+                initialLogs.Add(log);
+            }
+            context.Logs.AddRange(initialLogs);
+            context.SaveChanges();
+        }
+
+        // Every day, if no logs exist for today, add 50,000 logs for today
+        bool anyLogsForToday = context.Logs.Any(l => l.LogTime.Date == today);
+        if (!anyLogsForToday)
+        {
+            var todaysLogs = new List<Log>();
+            for (int i = 0; i < 50_000; i++)
+            {
+                var logTime = today
+                    .AddHours(_random.Next(0, 24))
+                    .AddMinutes(_random.Next(0, 60))
+                    .AddSeconds(_random.Next(0, 60));
+                var messageLength = _random.Next(100, 2001); // Up to 2000 characters
+                var message = GenerateRandomMessage(messageLength);
+
+                var log = new Log
+                {
+                    LogTime = logTime,
+                    LogDay = (byte)logTime.Day,
+                    Server = servers[_random.Next(servers.Length)],
+                    App = apps[_random.Next(apps.Length)],
+                    SourceContext = sourceContexts[_random.Next(sourceContexts.Length)],
+                    Level = levels[_random.Next(levels.Length)],
+                    Message = message,
+                    Exception = _random.Next(0, 10) < 3 ? "System.Exception: Something went wrong" : null, // 30% chance of exception
+                    Account = accounts[_random.Next(accounts.Length)]
+                };
+
+                todaysLogs.Add(log);
+            }
+            context.Logs.AddRange(todaysLogs);
+            context.SaveChanges();
+        }
+
+        var logs = new List<Log>();
+        for (int i = 0; i < 50_000; i++)
+        {
+            var logTime = today
+                .AddHours(_random.Next(0, 24))
+                .AddMinutes(_random.Next(0, 60))
+                .AddSeconds(_random.Next(0, 60));
             var messageLength = _random.Next(100, 2001); // Up to 2000 characters
             var message = GenerateRandomMessage(messageLength);
 
