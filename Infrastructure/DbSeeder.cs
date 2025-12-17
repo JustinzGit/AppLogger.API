@@ -8,22 +8,34 @@ public static class DbSeeder
 
     public static void Seed(SauronContext context)
     {
-
-        var today = DateTime.UtcNow.Date;
+        var cst = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
+        var nowCst = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, cst);
+        var today = nowCst.Date;
         var servers = new[] { "Server1", "Server2", "Server3", "Server4", "Server5" };
         var apps = new[] { "Sauron.API", "AnotherApp", "ThirdApp", "FourthApp", "FifthApp" };
         var sourceContexts = new[] { "Controllers.LoggingController", "Features.Logging.GetLogs", "Infrastructure.SauronContext", "Controllers.HomeController", "Features.Auth.Login" };
         var levels = new[] { "Information", "Warning", "Error", "Debug" };
         var accounts = new[] { "admin", "user1", "user2", "user3", null };
 
-        // Seed 1,000,000 logs if the database is empty
+        // Seed 1,000,000 logs spread over the last 7 days with strictly increasing timestamps, if the database is empty
         if (!context.Logs.Any())
         {
-            var initialLogs = new List<Log>();
+            var initialLogs = new List<Log>(capacity: 1_000_000);
+            var start = today.AddDays(-7); // start 7 days ago at 00:00 CST
+            var end = today.AddDays(1);    // exclusive end (tomorrow 00:00 CST)
+            var totalSeconds = (end - start).TotalSeconds; // seconds across 8 days boundary but we want 7 days inclusive to before today end; adjust
+            start = today.AddDays(-7);
+            end = today; // end at start of today for 7 days window (CST)
+            totalSeconds = (end - start).TotalSeconds; // exactly 7 days
+            var increment = totalSeconds / 1_000_000d; // seconds per log
+
+            double offsetSeconds = 0d;
             for (int i = 0; i < 1_000_000; i++)
             {
-                var logTime = DateTime.UtcNow.AddDays(-_random.Next(0, 30)).AddHours(-_random.Next(0, 24)).AddMinutes(-_random.Next(0, 60));
-                var messageLength = _random.Next(100, 2001); // Up to 2000 characters
+                var logTime = start.AddSeconds(offsetSeconds);
+                offsetSeconds += increment;
+
+                var messageLength = _random.Next(100, 2001);
                 var message = GenerateRandomMessage(messageLength);
 
                 var log = new Log
@@ -35,7 +47,7 @@ public static class DbSeeder
                     SourceContext = sourceContexts[_random.Next(sourceContexts.Length)],
                     Level = levels[_random.Next(levels.Length)],
                     Message = message,
-                    Exception = _random.Next(0, 10) < 3 ? "System.Exception: Something went wrong" : null, // 30% chance of exception
+                    Exception = _random.Next(0, 10) < 3 ? "System.Exception: Something went wrong" : null,
                     Account = accounts[_random.Next(accounts.Length)]
                 };
 
@@ -45,18 +57,23 @@ public static class DbSeeder
             context.SaveChanges();
         }
 
-        // Every day, if no logs exist for today, add 50,000 logs for today
+        // Every day, if no logs exist for today, add 50,000 logs for today with strictly increasing timestamps
         bool anyLogsForToday = context.Logs.Any(l => l.LogTime.Date == today);
         if (!anyLogsForToday)
         {
-            var todaysLogs = new List<Log>();
+            var todaysLogs = new List<Log>(capacity: 50_000);
+            var start = today;                 // today 00:00 CST
+            var end = today.AddDays(1);        // tomorrow 00:00 CST
+            var totalSeconds = (end - start).TotalSeconds; // 86400 seconds typically
+            var increment = totalSeconds / 50_000d;
+
+            double offsetSeconds = 0d;
             for (int i = 0; i < 50_000; i++)
             {
-                var logTime = today
-                    .AddHours(_random.Next(0, 24))
-                    .AddMinutes(_random.Next(0, 60))
-                    .AddSeconds(_random.Next(0, 60));
-                var messageLength = _random.Next(100, 2001); // Up to 2000 characters
+                var logTime = start.AddSeconds(offsetSeconds);
+                offsetSeconds += increment;
+
+                var messageLength = _random.Next(100, 2001);
                 var message = GenerateRandomMessage(messageLength);
 
                 var log = new Log
@@ -68,7 +85,7 @@ public static class DbSeeder
                     SourceContext = sourceContexts[_random.Next(sourceContexts.Length)],
                     Level = levels[_random.Next(levels.Length)],
                     Message = message,
-                    Exception = _random.Next(0, 10) < 3 ? "System.Exception: Something went wrong" : null, // 30% chance of exception
+                    Exception = _random.Next(0, 10) < 3 ? "System.Exception: Something went wrong" : null,
                     Account = accounts[_random.Next(accounts.Length)]
                 };
 
@@ -77,35 +94,6 @@ public static class DbSeeder
             context.Logs.AddRange(todaysLogs);
             context.SaveChanges();
         }
-
-        var logs = new List<Log>();
-        for (int i = 0; i < 50_000; i++)
-        {
-            var logTime = today
-                .AddHours(_random.Next(0, 24))
-                .AddMinutes(_random.Next(0, 60))
-                .AddSeconds(_random.Next(0, 60));
-            var messageLength = _random.Next(100, 2001); // Up to 2000 characters
-            var message = GenerateRandomMessage(messageLength);
-
-            var log = new Log
-            {
-                LogTime = logTime,
-                LogDay = (byte)logTime.Day,
-                Server = servers[_random.Next(servers.Length)],
-                App = apps[_random.Next(apps.Length)],
-                SourceContext = sourceContexts[_random.Next(sourceContexts.Length)],
-                Level = levels[_random.Next(levels.Length)],
-                Message = message,
-                Exception = _random.Next(0, 10) < 3 ? "System.Exception: Something went wrong" : null, // 30% chance of exception
-                Account = accounts[_random.Next(accounts.Length)]
-            };
-
-            logs.Add(log);
-        }
-
-        context.Logs.AddRange(logs);
-        context.SaveChanges();
     }
 
     private static string GenerateRandomMessage(int length)
