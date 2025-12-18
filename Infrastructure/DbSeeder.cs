@@ -13,8 +13,10 @@ public static class DbSeeder
         var today = nowCst.Date;
         var servers = new[] { "Server1", "Server2", "Server3", "Server4", "Server5" };
         var apps = new[] { "Sauron.API", "AnotherApp", "ThirdApp", "FourthApp", "FifthApp" };
+        var appsNoErrors = new[] { "HealthCheck.Service", "Metrics.Reporter", "Scheduler.Service", "Queue.Processor", "Cache.Cleaner", "Backup.Manager", "Monitor.Agent" };
         var sourceContexts = new[] { "Controllers.LoggingController", "Features.Logging.GetLogs", "Infrastructure.SauronContext", "Controllers.HomeController", "Features.Auth.Login" };
         var levels = new[] { "Information", "Warning", "Error", "Debug" };
+        var levelsNoError = new[] { "Information", "Warning", "Debug" };
         var accounts = new[] { "admin", "user1", "user2", "user3", null };
 
         // Seed 1,000,000 logs spread over the last 7 days with strictly increasing timestamps, if the database is empty
@@ -76,14 +78,30 @@ public static class DbSeeder
                 var messageLength = _random.Next(100, 2001);
                 var message = GenerateRandomMessage(messageLength);
 
+                // 70% chance of regular app, 30% chance of no-error app
+                bool useNoErrorApp = _random.Next(0, 100) < 30;
+                string selectedApp;
+                string selectedLevel;
+
+                if (useNoErrorApp)
+                {
+                    selectedApp = appsNoErrors[_random.Next(appsNoErrors.Length)];
+                    selectedLevel = levelsNoError[_random.Next(levelsNoError.Length)];
+                }
+                else
+                {
+                    selectedApp = apps[_random.Next(apps.Length)];
+                    selectedLevel = levels[_random.Next(levels.Length)];
+                }
+
                 var log = new Log
                 {
                     LogTime = logTime,
                     LogDay = (byte)logTime.Day,
                     Server = servers[_random.Next(servers.Length)],
-                    App = apps[_random.Next(apps.Length)],
+                    App = selectedApp,
                     SourceContext = sourceContexts[_random.Next(sourceContexts.Length)],
-                    Level = levels[_random.Next(levels.Length)],
+                    Level = selectedLevel,
                     Message = message,
                     Exception = _random.Next(0, 10) < 3 ? "System.Exception: Something went wrong" : null,
                     Account = accounts[_random.Next(accounts.Length)]
