@@ -14,7 +14,37 @@ public static class DbSeeder
         var servers = new[] { "Server1", "Server2", "Server3", "Server4", "Server5" };
         var apps = new[] { "Sauron.API", "AnotherApp", "ThirdApp", "FourthApp", "FifthApp" };
         var appsNoErrors = new[] { "HealthCheck.Service", "Metrics.Reporter", "Scheduler.Service", "Queue.Processor", "Cache.Cleaner", "Backup.Manager", "Monitor.Agent" };
-        var sourceContexts = new[] { "Controllers.LoggingController", "Features.Logging.GetLogs", "Infrastructure.SauronContext", "Controllers.HomeController", "Features.Auth.Login" };
+        var sourceContexts = new[] { 
+            "Controllers.LoggingController", 
+            "Features.Logging.GetLogs", 
+            "Infrastructure.SauronContext", 
+            "Controllers.HomeController", 
+            "Features.Auth.Login",
+            "Startup",
+            "Program",
+            "Middleware.ErrorHandler",
+            "Services.UserService",
+            "Repositories.LogRepository",
+            "Api.v1.Controllers.SearchController",
+            "Api.v1.Controllers.AdminController",
+            "Core.Domain.Entities.User",
+            "Core.Application.Services.Authentication.TokenService",
+            "Core.Application.Services.Authentication.PasswordHasher",
+            "Infrastructure.Persistence.Repositories.GenericRepository",
+            "Infrastructure.ExternalServices.EmailService",
+            "Infrastructure.ExternalServices.NotificationHub",
+            "Features.Users.Commands.CreateUser.CreateUserCommandHandler",
+            "Features.Users.Queries.GetUserById.GetUserByIdQueryHandler",
+            "Features.Dashboard.Queries.GetStatistics.GetStatisticsQueryHandler",
+            "Presentation.WebAPI.Controllers.v2.Analytics.AdvancedReportsController",
+            "Core.Application.BusinessLogic.OrderProcessing.OrderValidation.InventoryValidator",
+            "Infrastructure.Integration.ThirdParty.PaymentGateways.Stripe.StripePaymentProcessor",
+            "Core.Application.Features.Orders.EventHandlers.OrderCreated.SendConfirmationEmailHandler",
+            "Infrastructure.Messaging.RabbitMQ.Consumers.OrderProcessing.OrderCreatedConsumer",
+            "Core.Application.Services.Notifications.Email.Templates.OrderConfirmation.OrderConfirmationTemplateBuilder",
+            "Infrastructure.ExternalServices.CloudStorage.AWS.S3.Managers.FileUpload.LargeFileMultipartUploadManager",
+            "Core.Application.BusinessLogic.Inventory.StockManagement.AutomatedReordering.SupplierIntegration.PurchaseOrderGenerator"
+        };
         var levels = new[] { "Information", "Warning", "Error", "Debug" };
         var levelsNoError = new[] { "Information", "Warning", "Debug" };
         var accounts = new[] { "admin", "user1", "user2", "user3", null };
