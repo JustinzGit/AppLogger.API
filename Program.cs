@@ -8,7 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddEndpoints();
 builder.Services.AddControllers();
-builder.Services.AddDbContext<SauronContext>(options => options.UseSqlite("Data Source=sauron.db"));
+
+string connectionString = builder.Configuration.GetConnectionString("Sauron") ?? throw new Exception("Connection string has not been set");
+builder.Services.AddDbContext<SauronContext>(options => options.UseSqlServer(connectionString));
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
