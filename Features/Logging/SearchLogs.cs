@@ -17,7 +17,8 @@ public static class SearchLogs
         string[]? IncludedNamespaces,
         string[]? ExcludedNamespaces,
         int? CursorId,
-        int Limit = 10
+        int Limit = 10,
+        bool SortDescending = true
     );
 
     public record Response(
@@ -32,7 +33,11 @@ public static class SearchLogs
         IQueryable<Log> query = sauronContext.Logs.AsNoTracking();
 
         if (request.CursorId.HasValue)
-            query = query.Where(l => l.Id < request.CursorId);
+        {
+            query = request.SortDescending
+                ? query.Where(l => l.Id < request.CursorId)
+                : query.Where(l => l.Id > request.CursorId);
+        }
 
         if (request.StartDateTime.HasValue)
             query = query.Where(l => l.LogTime >= request.StartDateTime);
@@ -56,9 +61,8 @@ public static class SearchLogs
             query = query.Where(l => !request.ExcludedNamespaces.Contains(l.SourceContext));
 
         using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
-        
-        List<Log> logs = await query
-            .OrderByDescending(l => l.Id)
+
+        List<Log> logs = await (request.SortDescending ? query.OrderByDescending(l => l.Id) : query.OrderBy(l => l.Id))
             .Take(request.Limit + 1)
             .ToListAsync();
 
