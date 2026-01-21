@@ -1,7 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Sauron.API.Abstractions;
 using Sauron.API.Infrastructure;
 using Sauron.API.Infrastructure.Entities;
-using Sauron.API.Models;
 
 namespace Sauron.API.Features.Logging;
 
@@ -15,15 +15,23 @@ public static class SearchLogs
         string[]? Levels,
         string[]? IncludedNamespaces,
         string[]? ExcludedNamespaces,
-        int PageNumber = 1,
-        int PageSize = 25,
-        bool IncludeCount = true,
-        bool OrderDescending = false
+        int? CursorId,
+        int Limit = 10
+    );
+
+    public record Response(
+        List<Log> Logs,
+        int Limit,
+        bool HasMore,
+        int? CursorId
     );
 
     public static async Task<IResult> Handler([AsParameters] Request request, SauronContext sauronContext)
     {
-        IQueryable<Log> query = sauronContext.Logs;
+        IQueryable<Log> query = sauronContext.Logs.AsNoTracking();
+
+        if (request.CursorId.HasValue)
+            query = query.Where(l => l.Id < request.CursorId);
 
         if (request.StartDateTime.HasValue)
             query = query.Where(l => l.LogTime >= request.StartDateTime);
@@ -46,11 +54,18 @@ public static class SearchLogs
         if (request.ExcludedNamespaces?.Length > 0)
             query = query.Where(l => !request.ExcludedNamespaces.Contains(l.SourceContext));
 
-        query = request.OrderDescending ? query.OrderByDescending(l => l.Id) : query.OrderBy(l => l.Id);
+        List<Log> logs = await query
+            .OrderByDescending(l => l.Id)
+            .Take(request.Limit + 1)
+            .ToListAsync();
 
-        PagedList<Log> results = await PagedList<Log>.CreateAsync(query, request.PageNumber, request.PageSize, request.IncludeCount);
+        bool hasMore = logs.Count > request.Limit;
+        if (hasMore) logs.RemoveAt(logs.Count - 1);
+        int? cursorId = logs.Count != 0 ? logs.Last().Id : null;
 
-        return Results.Ok(results);
+        Response response = new(logs, request.Limit, hasMore, cursorId);
+
+        return Results.Ok(response);
     }
 
     public sealed class Endpoint : IEndpoint
