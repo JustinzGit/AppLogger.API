@@ -12,6 +12,16 @@ builder.Services.AddControllers();
 string connectionString = builder.Configuration.GetConnectionString("Sauron") ?? throw new Exception("Connection string has not been set");
 builder.Services.AddDbContext<SauronContext>(options => options.UseSqlServer(connectionString));
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {
@@ -34,6 +44,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthorization();
 
