@@ -1,3 +1,5 @@
+using System.Data;
+using Microsoft.EntityFrameworkCore;
 using Sauron.API.Abstractions;
 using Sauron.API.Infrastructure;
 using Sauron.API.Infrastructure.Entities;
@@ -16,10 +18,14 @@ public static class GetErrorCounts
             && l.Level == "Error"
         );
 
+        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+
         var errorCountsByApp = errorLogs
             .GroupBy(l => l.App)
             .Select(g => new { App = g.Key, Count = g.Count() })
             .ToList();
+
+        await transaction.CommitAsync();
         
         return Results.Ok(errorCountsByApp);
     }

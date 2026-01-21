@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Sauron.API.Abstractions;
 using Sauron.API.Infrastructure;
@@ -54,10 +55,14 @@ public static class SearchLogs
         if (request.ExcludedNamespaces?.Length > 0)
             query = query.Where(l => !request.ExcludedNamespaces.Contains(l.SourceContext));
 
+        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+        
         List<Log> logs = await query
             .OrderByDescending(l => l.Id)
             .Take(request.Limit + 1)
             .ToListAsync();
+
+        await transaction.CommitAsync();
 
         bool hasMore = logs.Count > request.Limit;
         if (hasMore) logs.RemoveAt(logs.Count - 1);
