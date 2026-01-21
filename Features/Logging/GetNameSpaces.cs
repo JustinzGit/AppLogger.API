@@ -23,6 +23,7 @@ public static class GetNameSpaces
             .Select(l => l.SourceContext)
             .OfType<string>()
             .Distinct()
+            .OrderByDescending(n => n.Length)
             .ToListAsync();
 
         await transaction.CommitAsync();
