@@ -28,7 +28,7 @@ public static class SearchLogs
         int? CursorId
     );
 
-    public static async Task<IResult> Handler([AsParameters] Request request, SauronContext sauronContext)
+    public static async Task<IResult> Handler([AsParameters] Request request, SauronContext sauronContext, CancellationToken token)
     {
         IQueryable<Log> query = sauronContext.Logs.AsNoTracking();
 
@@ -60,13 +60,13 @@ public static class SearchLogs
         if (request.ExcludedNamespaces?.Length > 0)
             query = query.Where(l => !request.ExcludedNamespaces.Contains(l.SourceContext));
 
-        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         List<Log> logs = await (request.SortDescending ? query.OrderByDescending(l => l.Id) : query.OrderBy(l => l.Id))
             .Take(request.Limit + 1)
-            .ToListAsync();
+            .ToListAsync(token);
 
-        await transaction.CommitAsync();
+        await transaction.CommitAsync(token);
 
         bool hasMore = logs.Count > request.Limit;
         if (hasMore) logs.RemoveAt(logs.Count - 1);

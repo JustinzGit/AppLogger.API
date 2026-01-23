@@ -8,7 +8,7 @@ namespace Sauron.API.Features.Logging;
 
 public static class GetErrorCounts
 {
-    public static async Task<IResult> Handler(SauronContext sauronContext)
+    public static async Task<IResult> Handler(SauronContext sauronContext, CancellationToken token)
     {
         DateTime currentDate = DateTime.Today;
 
@@ -18,14 +18,14 @@ public static class GetErrorCounts
             && l.Level == "Error"
         );
 
-        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         var errorCountsByApp = errorLogs
             .GroupBy(l => l.App)
             .Select(g => new { App = g.Key, Count = g.Count() })
-            .ToList();
+            .ToListAsync(token);
 
-        await transaction.CommitAsync();
+        await transaction.CommitAsync(token);
         
         return Results.Ok(errorCountsByApp);
     }
