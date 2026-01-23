@@ -7,30 +7,31 @@ namespace Sauron.API.Features.Logging;
 
 public static class GetNameSpaces
 {
-    public static async Task<IResult> Handler(SauronCache sauronCache)
+    public static async Task<IResult> Handler(SauronCache sauronCache, CancellationToken requestToken)
     {
         List<string> namespaces = await sauronCache.GetOrRefreshAsync(
             "namespaces", 
             FetchNameSpacesAsync, 
-            softExpiration: TimeSpan.FromHours(1), 
-            hardExpiration: TimeSpan.FromHours(24)
+            softTTL: TimeSpan.FromHours(1), 
+            hardTTL: TimeSpan.FromHours(24),
+            requestToken
         );
 
         return Results.Ok(namespaces);
     }
 
-    private static async Task<List<string>> FetchNameSpacesAsync(SauronContext sauronContext)
+    private static async Task<List<string>> FetchNameSpacesAsync(SauronContext sauronContext, CancellationToken token)
     {
-        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         List<string> namespaces = await sauronContext.Logs
             .Select(l => l.SourceContext)
             .OfType<string>()
             .Distinct()
             .OrderByDescending(n => n.Length)
-            .ToListAsync();
+            .ToListAsync(token);
 
-        await transaction.CommitAsync();
+        await transaction.CommitAsync(token);
 
         return namespaces;
     }

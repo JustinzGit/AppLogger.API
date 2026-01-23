@@ -7,28 +7,29 @@ namespace Sauron.API.Features.Logging;
 
 public static class GetAppNames
 {
-    public static async Task<IResult> Handler(SauronCache sauronCache)
+    public static async Task<IResult> Handler(SauronCache sauronCache, CancellationToken requestToken)
     {
         List<string> apps = await sauronCache.GetOrRefreshAsync(
             "appNames", 
             FetchAppNamesAsync, 
-            softExpiration: TimeSpan.FromHours(1), 
-            hardExpiration: TimeSpan.FromHours(24)
+            softTTL: TimeSpan.FromHours(1), 
+            hardTTL: TimeSpan.FromHours(24),
+            requestToken
         );
 
         return Results.Ok(apps);
     }
 
-    private static async Task<List<string>> FetchAppNamesAsync(SauronContext sauronContext)
+    private static async Task<List<string>> FetchAppNamesAsync(SauronContext sauronContext, CancellationToken token)
     {
-        await using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+        await using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         List<string> apps = await sauronContext.Logs
             .Select(l => l.App)
             .Distinct()
-            .ToListAsync();
+            .ToListAsync(token);
 
-        await transaction.CommitAsync();
+        await transaction.CommitAsync(token);
 
         return apps;
     }
