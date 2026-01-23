@@ -9,7 +9,7 @@ public static class GetAppNames
 {
     public static async Task<IResult> Handler(SauronCache sauronCache, CancellationToken requestToken)
     {
-        List<string> apps = await sauronCache.GetOrRefreshAsync(
+        string[] apps = await sauronCache.GetOrRefreshAsync(
             "appNames", 
             FetchAppNamesAsync, 
             softTTL: TimeSpan.FromHours(1), 
@@ -20,14 +20,14 @@ public static class GetAppNames
         return Results.Ok(apps);
     }
 
-    private static async Task<List<string>> FetchAppNamesAsync(SauronContext sauronContext, CancellationToken token)
+    private static async Task<string[]> FetchAppNamesAsync(SauronContext sauronContext, CancellationToken token)
     {
         await using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
-        List<string> apps = await sauronContext.Logs
+        string[] apps = await sauronContext.Logs
             .Select(l => l.App)
             .Distinct()
-            .ToListAsync(token);
+            .ToArrayAsync(token);
 
         await transaction.CommitAsync(token);
 

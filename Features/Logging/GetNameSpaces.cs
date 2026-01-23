@@ -9,7 +9,7 @@ public static class GetNameSpaces
 {
     public static async Task<IResult> Handler(SauronCache sauronCache, CancellationToken requestToken)
     {
-        List<string> namespaces = await sauronCache.GetOrRefreshAsync(
+        string[] namespaces = await sauronCache.GetOrRefreshAsync(
             "namespaces", 
             FetchNameSpacesAsync, 
             softTTL: TimeSpan.FromHours(1), 
@@ -20,16 +20,16 @@ public static class GetNameSpaces
         return Results.Ok(namespaces);
     }
 
-    private static async Task<List<string>> FetchNameSpacesAsync(SauronContext sauronContext, CancellationToken token)
+    private static async Task<string[]> FetchNameSpacesAsync(SauronContext sauronContext, CancellationToken token)
     {
         using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
-        List<string> namespaces = await sauronContext.Logs
+        string[] namespaces = await sauronContext.Logs
             .Select(l => l.SourceContext)
             .OfType<string>()
             .Distinct()
             .OrderByDescending(n => n.Length)
-            .ToListAsync(token);
+            .ToArrayAsync(token);
 
         await transaction.CommitAsync(token);
 
