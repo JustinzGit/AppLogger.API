@@ -20,7 +20,7 @@ public static class GetErrorCounts
 
         using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
-        var errorCountsByApp = errorLogs
+        var errorCountsByApp = await errorLogs
             .GroupBy(l => l.App)
             .Select(g => new { App = g.Key, Count = g.Count() })
             .ToListAsync(token);
