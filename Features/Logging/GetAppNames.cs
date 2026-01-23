@@ -2,22 +2,26 @@ using Sauron.API.Abstractions;
 using Sauron.API.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Sauron.API.Features.Logging;
 
 public static class GetAppNames
 {
-    public static async Task<IResult> Handler(SauronContext sauronContext, IMemoryCache cache)
+    public static async Task<IResult> Handler(SauronCache sauronCache)
     {
-        const string cacheKey = "appNames";
+        List<string> apps = await sauronCache.GetOrRefreshAsync(
+            "appNames", 
+            FetchAppNamesAsync, 
+            softExpiration: TimeSpan.FromHours(1), 
+            hardExpiration: TimeSpan.FromHours(24)
+        );
 
-        if (cache.TryGetValue(cacheKey, out List<string>? cachedAppNames))
-        {
-            return Results.Ok(cachedAppNames);
-        }
+        return Results.Ok(apps);
+    }
 
-        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+    private static async Task<List<string>> FetchAppNamesAsync(SauronContext sauronContext)
+    {
+        await using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
 
         List<string> apps = await sauronContext.Logs
             .Select(l => l.App)
@@ -26,9 +30,7 @@ public static class GetAppNames
 
         await transaction.CommitAsync();
 
-        cache.Set(cacheKey, apps, TimeSpan.FromHours(24));
-
-        return Results.Ok(apps);
+        return apps;
     }
 
     public sealed class Endpoint : IEndpoint
