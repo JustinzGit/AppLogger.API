@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Sauron.API.Infrastructure;
@@ -12,8 +11,6 @@ public class SauronCache(IMemoryCache cache, IServiceScopeFactory scopeFactory, 
 
     public async Task<T> GetOrRefreshAsync<T>(string cacheKey, Func<SauronContext, Task<T>> fetch, TimeSpan softExpiration, TimeSpan hardExpiration)
     {
-        long start = Stopwatch.GetTimestamp();
-        
         if (cache.TryGetValue(cacheKey, out CacheEntry<T>? cachedData) && cachedData is not null)
         {
             if (DateTimeOffset.UtcNow > cachedData.SoftExpiration)
