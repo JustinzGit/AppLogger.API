@@ -29,7 +29,10 @@ builder.Services.AddOpenApi(options =>
     options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
 });
 
-builder.Services.AddHybridCache();
+builder.Services.AddHybridCache(o =>
+{
+    o.MaximumPayloadBytes = 50 * 1024 * 1024; // 50MB per entry
+});
 
 var app = builder.Build();
 
