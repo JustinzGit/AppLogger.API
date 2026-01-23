@@ -29,7 +29,7 @@ builder.Services.AddOpenApi(options =>
     options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
 });
 
-builder.Services.AddMemoryCache();
+builder.Services.AddHybridCache();
 
 var app = builder.Build();
 
