@@ -1,10 +1,11 @@
 using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Sauron.API.Abstractions;
 using Sauron.API.Infrastructure;
 using Sauron.API.Infrastructure.Entities;
 
-namespace Sauron.API.Features.Logging;
+namespace SauronAPI.Features.Logging;
 
 public static class SearchLogs
 {
@@ -28,8 +29,10 @@ public static class SearchLogs
         int? CursorId
     );
 
-    public static async Task<IResult> Handler([AsParameters] Request request, SauronContext sauronContext, CancellationToken token)
+    public static async Task<IResult> Handler([AsParameters] Request request, SauronContext sauronContext, ILoggerFactory loggerFactory, CancellationToken token)
     {
+        ILogger logger = loggerFactory.CreateLogger("SearchLogs");
+
         IQueryable<Log> query = sauronContext.Logs.AsNoTracking();
 
         if (request.CursorId.HasValue)
@@ -60,21 +63,47 @@ public static class SearchLogs
         if (request.ExcludedNamespaces?.Length > 0)
             query = query.Where(l => !request.ExcludedNamespaces.Contains(l.SourceContext));
 
-        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
+        try
+        {
+            sauronContext.Database.SetCommandTimeout(60); // 1 minute
 
-        List<Log> logs = await (request.SortDescending ? query.OrderByDescending(l => l.Id) : query.OrderBy(l => l.Id))
-            .Take(request.Limit + 1)
-            .ToListAsync(token);
+            using var transaction = await sauronContext.Database
+                .BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
-        await transaction.CommitAsync(token);
+            List<Log> logs = await (
+                    request.SortDescending
+                        ? query.OrderByDescending(l => l.Id)
+                        : query.OrderBy(l => l.Id)
+                )
+                .Take(request.Limit + 1)
+                .ToListAsync(token);
 
-        bool hasMore = logs.Count > request.Limit;
-        if (hasMore) logs.RemoveAt(logs.Count - 1);
-        int? cursorId = logs.Count != 0 ? logs.Last().Id : null;
+            await transaction.CommitAsync(token);
 
-        Response response = new(logs, request.Limit, hasMore, cursorId);
+            bool hasMore = logs.Count > request.Limit;
+            if (hasMore)
+                logs.RemoveAt(logs.Count - 1);
 
-        return Results.Ok(response);
+            int? cursorId = logs.Count != 0 ? logs.Last().Id : null;
+
+            Response response = new(logs, request.Limit, hasMore, cursorId);
+            return Results.Ok(response);
+        }
+        catch (SqlException ex) when (ex.Number == -2)
+        {
+            logger.LogWarning("Status Code: {StatusCode}. Incoming Request: {@Request}.", 504, request);
+            return Results.StatusCode(504);
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("Status Code: {StatusCode}. Incoming Request: {@Request}.", 499, request);
+            return Results.StatusCode(499);
+        }
+        catch (Exception)
+        {
+            logger.LogError("Status Code: {StatusCode}. Incoming Request: {@Request}.", 500, request);
+            return Results.StatusCode(500);
+        }
     }
 
     public sealed class Endpoint : IEndpoint
