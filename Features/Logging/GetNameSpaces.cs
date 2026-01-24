@@ -25,8 +25,8 @@ public static class GetNameSpaces
         using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         string[] namespaces = await sauronContext.Logs
-            .Select(l => l.SourceContext)
-            .OfType<string>()
+            .Where(l => l.SourceContext != null)
+            .Select(l => l.SourceContext!)
             .Distinct()
             .OrderByDescending(n => n.Length)
             .ToArrayAsync(token);
