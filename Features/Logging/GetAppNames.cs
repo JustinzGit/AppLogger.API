@@ -22,6 +22,8 @@ public static class GetAppNames
 
     private static async Task<string[]> FetchAppNamesAsync(SauronContext sauronContext, CancellationToken token)
     {
+        sauronContext.Database.SetCommandTimeout(300); // 5 minutes
+
         await using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         string[] apps = await sauronContext.Logs

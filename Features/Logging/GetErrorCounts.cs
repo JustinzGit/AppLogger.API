@@ -18,6 +18,8 @@ public static class GetErrorCounts
             && l.Level == "Error"
         );
 
+        sauronContext.Database.SetCommandTimeout(300); // 5 minutes
+        
         using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         var errorCountsByApp = await errorLogs

@@ -22,6 +22,8 @@ public static class GetNameSpaces
 
     private static async Task<string[]> FetchNameSpacesAsync(SauronContext sauronContext, CancellationToken token)
     {
+        sauronContext.Database.SetCommandTimeout(300); // 5 minutes
+        
         using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         string[] namespaces = await sauronContext.Logs
