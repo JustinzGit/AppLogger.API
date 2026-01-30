@@ -5,7 +5,7 @@ using Sauron.API.Abstractions;
 using Sauron.API.Infrastructure;
 using Sauron.API.Infrastructure.Entities;
 
-namespace SauronAPI.Features.Logging;
+namespace Sauron.API.Features.Logging;
 
 public static class SearchLogs
 {
