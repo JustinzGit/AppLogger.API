@@ -91,17 +91,17 @@ public static class SearchLogs
         }
         catch (SqlException ex) when (ex.Number == -2)
         {
-            logger.LogWarning("Status Code: {StatusCode}. Incoming Request: {@Request}.", 504, request);
+            logger.LogWarning(ex, "Status Code: {StatusCode}. Incoming Request: {@Request}.", 504, request);
             return Results.StatusCode(504);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            logger.LogInformation("Status Code: {StatusCode}. Incoming Request: {@Request}.", 499, request);
+            logger.LogInformation(ex, "Status Code: {StatusCode}. Incoming Request: {@Request}.", 499, request);
             return Results.StatusCode(499);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            logger.LogError("Status Code: {StatusCode}. Incoming Request: {@Request}.", 500, request);
+            logger.LogError(ex, "Status Code: {StatusCode}. Incoming Request: {@Request}.", 500, request);
             return Results.StatusCode(500);
         }
     }
