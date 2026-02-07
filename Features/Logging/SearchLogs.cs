@@ -67,8 +67,7 @@ public static class SearchLogs
         {
             sauronContext.Database.SetCommandTimeout(60); // 1 minute
 
-            using var transaction = await sauronContext.Database
-                .BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
+            using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
             List<Log> logs = await (
                     request.SortDescending
