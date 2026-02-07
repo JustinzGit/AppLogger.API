@@ -13,7 +13,7 @@ public static class GetNameSpaces
             "namespaces", 
             FetchNameSpacesAsync, 
             softTTL: TimeSpan.FromHours(1), 
-            hardTTL: TimeSpan.FromHours(24),
+            hardTTL: null,
             requestToken
         );
 

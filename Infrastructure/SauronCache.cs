@@ -9,7 +9,7 @@ public class SauronCache(HybridCache cache, IServiceScopeFactory scopeFactory, I
 
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> _refreshLocks = new();
 
-    public async Task<string[]> GetOrRefreshAsync(string cacheKey, Func<SauronContext, CancellationToken, Task<string[]>> fetch, TimeSpan softTTL, TimeSpan hardTTL, CancellationToken requestToken = default)
+    public async Task<string[]> GetOrRefreshAsync(string cacheKey, Func<SauronContext, CancellationToken, Task<string[]>> fetch, TimeSpan softTTL, TimeSpan? hardTTL = null, CancellationToken requestToken = default)
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
@@ -66,8 +66,6 @@ public class SauronCache(HybridCache cache, IServiceScopeFactory scopeFactory, I
 
         SauronContext sauronContext = serviceScope.ServiceProvider.GetRequiredService<SauronContext>();
 
-        string[] data = await fetch(sauronContext, token);
-
-        return data;
+        return await fetch(sauronContext, token);
     }
 }
