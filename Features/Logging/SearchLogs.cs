@@ -63,17 +63,18 @@ public static class SearchLogs
         if (request.ExcludedNamespaces?.Length > 0)
             query = query.Where(l => !request.ExcludedNamespaces.Contains(l.SourceContext));
 
+        if (request.SortAscending)
+            query = query.OrderBy(l => l.Id);
+        else
+            query = query.OrderByDescending(l => l.Id);
+
         try
         {
             sauronContext.Database.SetCommandTimeout(60); // 1 minute
 
             using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
-            List<Log> logs = await (
-                    request.SortAscending
-                        ? query.OrderBy(l => l.Id)
-                        : query.OrderByDescending(l => l.Id)
-                )
+            List<Log> logs = await query
                 .Take(request.Limit + 1)
                 .ToListAsync(token);
 
