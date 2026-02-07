@@ -36,7 +36,7 @@ public class SauronCache(HybridCache cache, IServiceScopeFactory scopeFactory, I
             {
                 try
                 {
-                    logger.LogInformation("SWR refresh in progress: {Key}", cacheKey);
+                    logger.LogInformation("Cache refresh in progress for key: {Key}", cacheKey);
 
                     string[] data = await FetchAsync(fetch, CancellationToken.None);
 
@@ -48,11 +48,11 @@ public class SauronCache(HybridCache cache, IServiceScopeFactory scopeFactory, I
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "SWR refresh failed: {Key}", cacheKey);
+                    logger.LogError(ex, "Cache refresh failed for key: {Key}", cacheKey);
                 }
                 finally
                 {
-                    logger.LogInformation("SWR refresh complete: {Key}", cacheKey);
+                    logger.LogInformation("Cache refresh complete for key: {Key}", cacheKey);
                     refreshLock.Release();
                 }
             }, CancellationToken.None);
