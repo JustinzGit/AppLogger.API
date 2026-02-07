@@ -19,7 +19,7 @@ public static class SearchLogs
         string[]? ExcludedNamespaces,
         int? CursorId,
         int Limit = 10,
-        bool SortDescending = true
+        bool SortAscending = true
     );
 
     public record Response(
@@ -37,9 +37,9 @@ public static class SearchLogs
 
         if (request.CursorId.HasValue)
         {
-            query = request.SortDescending
-                ? query.Where(l => l.Id < request.CursorId)
-                : query.Where(l => l.Id > request.CursorId);
+            query = request.SortAscending
+                ? query.Where(l => l.Id > request.CursorId)
+                : query.Where(l => l.Id < request.CursorId);
         }
 
         if (request.StartDateTime.HasValue)
@@ -70,9 +70,9 @@ public static class SearchLogs
             using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
             List<Log> logs = await (
-                    request.SortDescending
-                        ? query.OrderByDescending(l => l.Id)
-                        : query.OrderBy(l => l.Id)
+                    request.SortAscending
+                        ? query.OrderBy(l => l.Id)
+                        : query.OrderByDescending(l => l.Id)
                 )
                 .Take(request.Limit + 1)
                 .ToListAsync(token);
@@ -87,7 +87,7 @@ public static class SearchLogs
             int? cursorId = logs.Count != 0 ? logs.Last().Id : null;
 
             Response response = new(logs, request.Limit, hasMore, cursorId);
-            
+
             return Results.Ok(response);
         }
         catch (SqlException ex) when (ex.Number == -2)
