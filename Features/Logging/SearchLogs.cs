@@ -67,8 +67,7 @@ public static class SearchLogs
         {
             sauronContext.Database.SetCommandTimeout(60); // 1 minute
 
-            using var transaction = await sauronContext.Database
-                .BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
+            using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
             List<Log> logs = await (
                     request.SortDescending
@@ -81,12 +80,14 @@ public static class SearchLogs
             await transaction.CommitAsync(token);
 
             bool hasMore = logs.Count > request.Limit;
+
             if (hasMore)
                 logs.RemoveAt(logs.Count - 1);
 
             int? cursorId = logs.Count != 0 ? logs.Last().Id : null;
 
             Response response = new(logs, request.Limit, hasMore, cursorId);
+            
             return Results.Ok(response);
         }
         catch (SqlException ex) when (ex.Number == -2)
