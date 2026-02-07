@@ -68,44 +68,26 @@ public static class SearchLogs
         else
             query = query.OrderByDescending(l => l.Id);
 
-        try
-        {
-            sauronContext.Database.SetCommandTimeout(60); // 1 minute
+        sauronContext.Database.SetCommandTimeout(60); // 1 minute
 
-            using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
+        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
-            List<Log> logs = await query
-                .Take(request.Limit + 1)
-                .ToListAsync(token);
+        List<Log> logs = await query
+            .Take(request.Limit + 1)
+            .ToListAsync(token);
 
-            await transaction.CommitAsync(token);
+        await transaction.CommitAsync(token);
 
-            bool hasMore = logs.Count > request.Limit;
+        bool hasMore = logs.Count > request.Limit;
 
-            if (hasMore)
-                logs.RemoveAt(logs.Count - 1);
+        if (hasMore)
+            logs.RemoveAt(logs.Count - 1);
 
-            int? cursorId = logs.Count != 0 ? logs.Last().Id : null;
+        int? cursorId = logs.Count != 0 ? logs.Last().Id : null;
 
-            Response response = new(logs, request.Limit, hasMore, cursorId);
+        Response response = new(logs, request.Limit, hasMore, cursorId);
 
-            return Results.Ok(response);
-        }
-        catch (SqlException ex) when (ex.Number == -2)
-        {
-            logger.LogWarning(ex, "Status Code: {StatusCode}. Incoming Request: {@Request}.", 504, request);
-            return Results.StatusCode(504);
-        }
-        catch (OperationCanceledException ex)
-        {
-            logger.LogInformation(ex, "Status Code: {StatusCode}. Incoming Request: {@Request}.", 499, request);
-            return Results.StatusCode(499);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Status Code: {StatusCode}. Incoming Request: {@Request}.", 500, request);
-            return Results.StatusCode(500);
-        }
+        return Results.Ok(response);
     }
 
     public sealed class Endpoint : IEndpoint
