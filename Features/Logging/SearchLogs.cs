@@ -1,5 +1,4 @@
 using System.Data;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Sauron.API.Abstractions;
 using Sauron.API.Infrastructure;
