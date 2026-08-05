@@ -1,15 +1,15 @@
-using Sauron.API.Abstractions;
-using Sauron.API.Infrastructure;
+using AppLogger.API.Abstractions;
+using AppLogger.API.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 
-namespace Sauron.API.Features.Logging;
+namespace AppLogger.API.Features.Logging;
 
 public static class GetNameSpaces
 {
-    public static async Task<IResult> Handler(SauronCache sauronCache, CancellationToken requestToken)
+    public static async Task<IResult> Handler(AppLoggerCache appLoggerCache, CancellationToken requestToken)
     {
-        string[] namespaces = await sauronCache.GetOrRefreshAsync(
+        string[] namespaces = await appLoggerCache.GetOrRefreshAsync(
             "namespaces", 
             FetchNameSpacesAsync, 
             softTTL: TimeSpan.FromHours(1), 
@@ -20,13 +20,13 @@ public static class GetNameSpaces
         return Results.Ok(namespaces);
     }
 
-    private static async Task<string[]> FetchNameSpacesAsync(SauronContext sauronContext, CancellationToken token)
+    private static async Task<string[]> FetchNameSpacesAsync(AppLoggerContext appLoggerContext, CancellationToken token)
     {
-        sauronContext.Database.SetCommandTimeout(300); // 5 minutes
+        appLoggerContext.Database.SetCommandTimeout(300); // 5 minutes
         
-        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
+        using var transaction = await appLoggerContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
-        string[] namespaces = await sauronContext.Logs
+        string[] namespaces = await appLoggerContext.Logs
             .Where(l => l.SourceContext != null)
             .Select(l => l.SourceContext!)
             .Distinct()

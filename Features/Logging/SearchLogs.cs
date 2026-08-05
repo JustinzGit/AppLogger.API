@@ -1,10 +1,10 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
-using Sauron.API.Abstractions;
-using Sauron.API.Infrastructure;
-using Sauron.API.Infrastructure.Entities;
+using AppLogger.API.Abstractions;
+using AppLogger.API.Infrastructure;
+using AppLogger.API.Infrastructure.Entities;
 
-namespace Sauron.API.Features.Logging;
+namespace AppLogger.API.Features.Logging;
 
 public static class SearchLogs
 {
@@ -28,11 +28,11 @@ public static class SearchLogs
         int? CursorId
     );
 
-    public static async Task<IResult> Handler([AsParameters] Request request, SauronContext sauronContext, ILoggerFactory loggerFactory, CancellationToken token)
+    public static async Task<IResult> Handler([AsParameters] Request request, AppLoggerContext appLoggerContext, ILoggerFactory loggerFactory, CancellationToken token)
     {
         ILogger logger = loggerFactory.CreateLogger("SearchLogs");
 
-        IQueryable<Log> query = sauronContext.Logs.AsNoTracking();
+        IQueryable<Log> query = appLoggerContext.Logs.AsNoTracking();
 
         if (request.CursorId.HasValue)
         {
@@ -67,9 +67,9 @@ public static class SearchLogs
         else
             query = query.OrderByDescending(l => l.Id);
 
-        sauronContext.Database.SetCommandTimeout(60); // 1 minute
+        appLoggerContext.Database.SetCommandTimeout(60); // 1 minute
 
-        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
+        using var transaction = await appLoggerContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         List<Log> logs = await query
             .Take(request.Limit + 1)

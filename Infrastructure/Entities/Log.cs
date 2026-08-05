@@ -1,4 +1,4 @@
-namespace Sauron.API.Infrastructure.Entities;
+namespace AppLogger.API.Infrastructure.Entities;
 
 // TODO: check DB schema
 public class Log

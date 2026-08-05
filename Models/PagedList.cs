@@ -1,4 +1,4 @@
-namespace Sauron.API.Models;
+namespace AppLogger.API.Models;
 
 using Microsoft.EntityFrameworkCore;
 

@@ -1,8 +1,8 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Sauron.API.Abstractions;
+using AppLogger.API.Abstractions;
 
-namespace Sauron.API.Extensions;
+namespace AppLogger.API.Extensions;
 
 public static class EndpointExtensions
 {

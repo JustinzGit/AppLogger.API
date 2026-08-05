@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
-using Sauron.API.Extensions;
-using Sauron.API.Infrastructure;
+using AppLogger.API.Extensions;
+using AppLogger.API.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,9 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpoints();
 builder.Services.AddControllers();
 
-string connectionString = builder.Configuration.GetConnectionString("Sauron") ?? throw new Exception("Connection string has not been set");
-builder.Services.AddDbContext<SauronContext>(options => options.UseSqlServer(connectionString));
-builder.Services.AddSingleton<SauronCache>();
+string connectionString = builder.Configuration.GetConnectionString("AppLogger") ?? throw new Exception("Connection string has not been set");
+builder.Services.AddDbContext<AppLoggerContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddSingleton<AppLoggerCache>();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -43,7 +43,7 @@ if (app.Environment.IsDevelopment())
 
     // Seed the database
     using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<SauronContext>();
+    var context = scope.ServiceProvider.GetRequiredService<AppLoggerContext>();
     context.Database.EnsureCreated();
     DbSeeder.Seed(context);
 }

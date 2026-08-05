@@ -1,15 +1,15 @@
-using Sauron.API.Abstractions;
-using Sauron.API.Infrastructure;
+using AppLogger.API.Abstractions;
+using AppLogger.API.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 
-namespace Sauron.API.Features.Logging;
+namespace AppLogger.API.Features.Logging;
 
 public static class GetAppNames
 {
-    public static async Task<IResult> Handler(SauronCache sauronCache, CancellationToken requestToken)
+    public static async Task<IResult> Handler(AppLoggerCache appLoggerCache, CancellationToken requestToken)
     {
-        string[] apps = await sauronCache.GetOrRefreshAsync(
+        string[] apps = await appLoggerCache.GetOrRefreshAsync(
             "appNames", 
             FetchAppNamesAsync, 
             softTTL: TimeSpan.FromHours(1), 
@@ -20,13 +20,13 @@ public static class GetAppNames
         return Results.Ok(apps);
     }
 
-    private static async Task<string[]> FetchAppNamesAsync(SauronContext sauronContext, CancellationToken token)
+    private static async Task<string[]> FetchAppNamesAsync(AppLoggerContext appLoggerContext, CancellationToken token)
     {
-        sauronContext.Database.SetCommandTimeout(300); // 5 minutes
+        appLoggerContext.Database.SetCommandTimeout(300); // 5 minutes
 
-        await using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
+        await using var transaction = await appLoggerContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
-        string[] apps = await sauronContext.Logs
+        string[] apps = await appLoggerContext.Logs
             .Select(l => l.App)
             .Distinct()
             .ToArrayAsync(token);

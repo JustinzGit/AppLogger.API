@@ -1,26 +1,26 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
-using Sauron.API.Abstractions;
-using Sauron.API.Infrastructure;
-using Sauron.API.Infrastructure.Entities;
+using AppLogger.API.Abstractions;
+using AppLogger.API.Infrastructure;
+using AppLogger.API.Infrastructure.Entities;
 
-namespace Sauron.API.Features.Logging;
+namespace AppLogger.API.Features.Logging;
 
 public static class GetErrorCounts
 {
-    public static async Task<IResult> Handler(SauronContext sauronContext, CancellationToken token)
+    public static async Task<IResult> Handler(AppLoggerContext appLoggerContext, CancellationToken token)
     {
         DateTime currentDate = DateTime.Today;
 
-        IQueryable<Log> errorLogs = sauronContext.Logs.Where(l => 
+        IQueryable<Log> errorLogs = appLoggerContext.Logs.Where(l => 
             l.LogDay == currentDate.Day
             && l.LogTime >= currentDate
             && l.Level == "Error"
         );
 
-        sauronContext.Database.SetCommandTimeout(300); // 5 minutes
+        appLoggerContext.Database.SetCommandTimeout(300); // 5 minutes
         
-        using var transaction = await sauronContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
+        using var transaction = await appLoggerContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted, token);
 
         var errorCountsByApp = await errorLogs
             .GroupBy(l => l.App)

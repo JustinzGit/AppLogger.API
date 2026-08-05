@@ -1,4 +1,4 @@
-namespace Sauron.API.Abstractions;
+namespace AppLogger.API.Abstractions;
 
 public interface IEndpoint
 {

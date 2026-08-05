@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sauron.API", "Sauron.API.csproj", "{5EC688A0-902A-378C-662D-9E645D963D0D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppLogger.API", "AppLogger.API.csproj", "{5EC688A0-902A-378C-662D-9E645D963D0D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

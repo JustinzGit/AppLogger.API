@@ -1,15 +1,15 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Hybrid;
 
-namespace Sauron.API.Infrastructure;
+namespace AppLogger.API.Infrastructure;
 
-public class SauronCache(HybridCache cache, IServiceScopeFactory scopeFactory, ILogger<SauronCache> logger)
+public class AppLoggerCache(HybridCache cache, IServiceScopeFactory scopeFactory, ILogger<AppLoggerCache> logger)
 {
     private record CacheEntry(string[] Data, DateTimeOffset SoftTTL);
 
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> _refreshLocks = new();
 
-    public async Task<string[]> GetOrRefreshAsync(string cacheKey, Func<SauronContext, CancellationToken, Task<string[]>> fetch, TimeSpan softTTL, TimeSpan? hardTTL = null, CancellationToken requestToken = default)
+    public async Task<string[]> GetOrRefreshAsync(string cacheKey, Func<AppLoggerContext, CancellationToken, Task<string[]>> fetch, TimeSpan softTTL, TimeSpan? hardTTL = null, CancellationToken requestToken = default)
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
@@ -60,12 +60,12 @@ public class SauronCache(HybridCache cache, IServiceScopeFactory scopeFactory, I
         return cacheEntry.Data;
     }
 
-    private async Task<string[]> FetchAsync(Func<SauronContext, CancellationToken, Task<string[]>> fetch, CancellationToken token)
+    private async Task<string[]> FetchAsync(Func<AppLoggerContext, CancellationToken, Task<string[]>> fetch, CancellationToken token)
     {
         await using AsyncServiceScope serviceScope = scopeFactory.CreateAsyncScope();
 
-        SauronContext sauronContext = serviceScope.ServiceProvider.GetRequiredService<SauronContext>();
+        AppLoggerContext appLoggerContext = serviceScope.ServiceProvider.GetRequiredService<AppLoggerContext>();
 
-        return await fetch(sauronContext, token);
+        return await fetch(appLoggerContext, token);
     }
 }

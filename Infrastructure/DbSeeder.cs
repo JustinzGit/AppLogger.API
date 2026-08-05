@@ -1,23 +1,23 @@
-using Sauron.API.Infrastructure.Entities;
+using AppLogger.API.Infrastructure.Entities;
 
-namespace Sauron.API.Infrastructure;
+namespace AppLogger.API.Infrastructure;
 
 public static class DbSeeder
 {
     private static readonly Random _random = new();
 
-    public static void Seed(SauronContext context)
+    public static void Seed(AppLoggerContext context)
     {
         var cst = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
         var nowCst = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, cst);
         var today = nowCst.Date;
         var servers = new[] { "Server1", "Server2", "Server3", "Server4", "Server5" };
-        var apps = new[] { "Sauron.API", "AnotherApp", "ThirdApp", "FourthApp", "FifthApp" };
+        var apps = new[] { "AppLogger.API", "AnotherApp", "ThirdApp", "FourthApp", "FifthApp" };
         var appsNoErrors = new[] { "HealthCheck.Service", "Metrics.Reporter", "Scheduler.Service", "Queue.Processor", "Cache.Cleaner", "Backup.Manager", "Monitor.Agent" };
         var sourceContexts = new[] { 
             "Controllers.LoggingController", 
             "Features.Logging.GetLogs", 
-            "Infrastructure.SauronContext", 
+            "Infrastructure.AppLoggerContext", 
             "Controllers.HomeController", 
             "Features.Auth.Login",
             "Startup",
