@@ -34,14 +34,17 @@ builder.Services.AddHybridCache(o =>
     o.MaximumPayloadBytes = 50 * 1024 * 1024; // 50MB per entry
 });
 
-builder.Services.AddHostedService<DailyLogSeederService>();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddHostedService<DailyLogSeederService>();
+}
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi();    
 }
 
 app.UseHttpsRedirection();
