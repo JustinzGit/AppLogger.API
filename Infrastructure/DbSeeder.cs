@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using AppLogger.API.Infrastructure.Entities;
 
 namespace AppLogger.API.Infrastructure;
@@ -142,6 +143,16 @@ public static class DbSeeder
             context.Logs.AddRange(todaysLogs);
             context.SaveChanges();
         }
+    }
+
+    // Delete logs older than retentionDays to keep the demo database from growing unbounded
+    public static void PruneOldLogs(AppLoggerContext context, int retentionDays = 14)
+    {
+        var cst = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
+        var nowCst = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, cst);
+        var cutoff = nowCst.Date.AddDays(-retentionDays);
+
+        context.Logs.Where(l => l.LogTime < cutoff).ExecuteDelete();
     }
 
     private static string GenerateRandomMessage(int length)
