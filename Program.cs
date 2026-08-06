@@ -10,7 +10,13 @@ builder.Services.AddEndpoints();
 builder.Services.AddControllers();
 
 string connectionString = builder.Configuration.GetConnectionString("AppLogger") ?? throw new Exception("Connection string has not been set");
-builder.Services.AddDbContext<AppLoggerContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<AppLoggerContext>(options =>
+{
+    if (builder.Environment.IsDevelopment())
+        options.UseSqlite(connectionString);
+    else
+        options.UseSqlServer(connectionString);
+});
 builder.Services.AddSingleton<AppLoggerCache>();
 builder.Services.AddCors(options =>
 {
