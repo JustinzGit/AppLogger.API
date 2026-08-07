@@ -45,6 +45,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<AppLoggerContext>();
+    context.Database.EnsureCreated();
 }
 
 app.UseHttpsRedirection();
