@@ -50,19 +50,18 @@ public static class DbSeeder
         var levelsNoError = new[] { "Information", "Warning", "Debug" };
         var accounts = new[] { "admin", "user1", "user2", "user3", null };
 
+        const int batchSize = 5_000;
+
         // Seed 1,000,000 logs spread over the last 7 days with strictly increasing timestamps, if the database is empty
         if (!context.Logs.Any())
         {
-            var initialLogs = new List<Log>(capacity: 1_000_000);
             var start = today.AddDays(-7); // start 7 days ago at 00:00 CST
-            var end = today.AddDays(1);    // exclusive end (tomorrow 00:00 CST)
-            var totalSeconds = (end - start).TotalSeconds; // seconds across 8 days boundary but we want 7 days inclusive to before today end; adjust
-            start = today.AddDays(-7);
-            end = today; // end at start of today for 7 days window (CST)
-            totalSeconds = (end - start).TotalSeconds; // exactly 7 days
+            var end = today;               // end at start of today for 7 days window (CST)
+            var totalSeconds = (end - start).TotalSeconds; // exactly 7 days
             var increment = totalSeconds / 1_000_000d; // seconds per log
 
             double offsetSeconds = 0d;
+            var batch = new List<Log>(capacity: batchSize);
             for (int i = 0; i < 1_000_000; i++)
             {
                 var logTime = start.AddSeconds(offsetSeconds);
@@ -84,23 +83,36 @@ public static class DbSeeder
                     Account = accounts[_random.Next(accounts.Length)]
                 };
 
-                initialLogs.Add(log);
+                batch.Add(log);
+
+                if (batch.Count == batchSize)
+                {
+                    context.Logs.AddRange(batch);
+                    context.SaveChanges();
+                    context.ChangeTracker.Clear();
+                    batch.Clear();
+                }
             }
-            context.Logs.AddRange(initialLogs);
-            context.SaveChanges();
+
+            if (batch.Count > 0)
+            {
+                context.Logs.AddRange(batch);
+                context.SaveChanges();
+                context.ChangeTracker.Clear();
+            }
         }
 
         // Every day, if no logs exist for today, add 50,000 logs for today with strictly increasing timestamps
         bool anyLogsForToday = context.Logs.Any(l => l.LogTime.Date == today);
         if (!anyLogsForToday)
         {
-            var todaysLogs = new List<Log>(capacity: 50_000);
             var start = today;                 // today 00:00 CST
             var end = today.AddDays(1);        // tomorrow 00:00 CST
             var totalSeconds = (end - start).TotalSeconds; // 86400 seconds typically
             var increment = totalSeconds / 50_000d;
 
             double offsetSeconds = 0d;
+            var batch = new List<Log>(capacity: batchSize);
             for (int i = 0; i < 50_000; i++)
             {
                 var logTime = start.AddSeconds(offsetSeconds);
@@ -138,10 +150,23 @@ public static class DbSeeder
                     Account = accounts[_random.Next(accounts.Length)]
                 };
 
-                todaysLogs.Add(log);
+                batch.Add(log);
+
+                if (batch.Count == batchSize)
+                {
+                    context.Logs.AddRange(batch);
+                    context.SaveChanges();
+                    context.ChangeTracker.Clear();
+                    batch.Clear();
+                }
             }
-            context.Logs.AddRange(todaysLogs);
-            context.SaveChanges();
+
+            if (batch.Count > 0)
+            {
+                context.Logs.AddRange(batch);
+                context.SaveChanges();
+                context.ChangeTracker.Clear();
+            }
         }
     }
 
