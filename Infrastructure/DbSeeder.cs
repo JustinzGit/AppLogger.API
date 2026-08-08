@@ -50,7 +50,9 @@ public static class DbSeeder
         var levelsNoError = new[] { "Information", "Warning", "Debug" };
         var accounts = new[] { "admin", "user1", "user2", "user3", null };
 
-        const int batchSize = 5_000;
+        const int batchSize = 200;
+
+        context.ChangeTracker.AutoDetectChangesEnabled = false;
 
         // Seed 1,000,000 logs spread over the last 7 days with strictly increasing timestamps, if the database is empty
         if (!context.Logs.Any())
